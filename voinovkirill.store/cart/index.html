@@ -582,7 +582,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const cart = JSON.parse(localStorage.getItem("cart") || "[]");
 
   if (cart.length === 0) {
-    cartContainer.innerHTML = "<p style='text-align: center;'>Giỏ hàng trống.</p>";
+    cartContainer.innerHTML = "<p style='text-align: center;'>Cart empty.</p>";
     return;
   }
 
@@ -649,6 +649,7 @@ async function redirectToStripe() {
     const data = await response.json();
 
     if (data?.url) {
+	  localStorage.setItem("cart", "[]");
       window.open(data.url, "_blank");
     } else {
       alert("Payment fail.");

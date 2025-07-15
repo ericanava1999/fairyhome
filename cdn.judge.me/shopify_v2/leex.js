@@ -18,13 +18,122 @@ document.addEventListener("DOMContentLoaded", function () {
       const product = {
         id: "576897",
         name: document.querySelector(".product_title")?.innerText || "Product",
-  image: document.querySelector(".woocommerce-product-gallery img")?.src || "https://via.placeholder.com/100",
+		image: document.querySelector(".woocommerce-product-gallery img")?.src || "https://via.placeholder.com/100",
         price: document.querySelector(".price .amount")?.innerText || "0",
         size: document.querySelector("span.label-size b")?.innerText || null,
         type: document.querySelector("span.label-type b")?.innerText || null
       };
 
       addToCart(product);
+	  updateCartCount();
     });
   }
+   // Lấy tất cả icon giỏ hàng
+  const cartIcons = document.querySelectorAll(".icon-shopping-cart");
+
+  cartIcons.forEach((icon, index) => {
+    // Tạo wrapper nếu chưa có
+    const wrapper = document.createElement("div");
+    wrapper.className = "cart-icon-wrapper";
+    wrapper.style.position = "relative";
+    wrapper.style.display = "inline-block";
+
+    // Tạo badge đè lên
+    const badge = document.createElement("span");
+    badge.id = `cart-count-${index}`;
+    badge.className = "cart-count-badge";
+    badge.style.position = "absolute";
+    badge.style.top = "-5px";
+    badge.style.right = "-10px";
+    badge.style.backgroundColor = "red";
+    badge.style.color = "white";
+    badge.style.fontSize = "12px";
+    badge.style.fontWeight = "bold";
+    badge.style.padding = "2px 6px";
+    badge.style.borderRadius = "50%";
+    badge.style.lineHeight = "1";
+    badge.style.display = "none";
+
+    // Chèn icon vào wrapper
+    icon.parentNode.insertBefore(wrapper, icon);
+    wrapper.appendChild(icon);
+    wrapper.appendChild(badge);
+	
+	
+  });
+
+  // Cập nhật số lượng
+  updateCartCount();
 });
+
+function updateCartCount() {
+  const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+  const count = cart.length;
+
+  // Cập nhật badge
+  document.querySelectorAll(".cart-count-badge").forEach(badge => {
+    badge.textContent = count;
+    badge.style.display = count > 0 ? "inline-block" : "none";
+  });
+
+  // Cập nhật giao diện trong .widget_shopping_cart_content
+  const widgetContainers = document.querySelectorAll(".widget_shopping_cart_content");
+  widgetContainers.forEach(container => {
+    container.innerHTML = ""; // Xóa cũ
+
+    // Tăng chiều rộng giỏ
+    container.style.minWidth = "340px";
+    container.style.maxWidth = "420px";
+	container.style.maxHeight = "240px";
+	container.style.overflowY = "auto";
+
+    if (cart.length === 0) {
+      container.innerHTML = "<p class='woocommerce-mini-cart__empty-message'>Your cart is empty</p>";
+      return;
+    }
+
+    cart.forEach((product, index) => {
+      const item = document.createElement("div");
+      item.className = "cart-item";
+      Object.assign(item.style, {
+        display: "flex",
+        alignItems: "center",
+        gap: "10px",
+        marginBottom: "12px",
+        borderBottom: "1px solid #eee",
+        paddingBottom: "12px",
+        maxWidth: "100%"
+      });
+
+      item.innerHTML = `
+        <img src="${product.image}" alt="${product.name}" 
+             style="width:70px;height:70px;object-fit:cover;flex-shrink:0;">
+        <div style="flex:1; overflow-wrap: break-word;">
+          <div style="font-weight: bold;">${product.name}</div>
+          <div style="color:red;">Price: ${product.price}</div>
+          ${product.size ? `<div>Size: ${product.size}</div>` : ""}
+          ${product.type ? `<div>Type: ${product.type}</div>` : ""}
+        </div>
+        <button style="
+          background-color: #ff4d4d;
+          color: white;
+          border: none;
+          padding: 8px 14px;
+          font-weight: bold;
+          border-radius: 6px;
+          cursor: pointer;
+          white-space: nowrap;
+        " onclick="removeFromCart(${index})">REMOVE</button>
+      `;
+
+      container.appendChild(item);
+    });
+  });
+}
+
+function removeFromCart(index) {
+  const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+  cart.splice(index, 1);
+  localStorage.setItem("cart", JSON.stringify(cart));
+  updateCartCount();
+}
